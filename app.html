@@ -52,6 +52,7 @@
   <div id="show-btn">
     <input type="text" id="input" style="width:80%" />
     <button onclick="reconnect()">connect</button>
+    <span id="info"><span>
   </div>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -105,13 +106,20 @@
     var box = document.getElementById('message_box');
     var input=document.getElementById('input');
     var shell=document.getElementById("shell");
+    var info=document.getElementById("info");
     var command;
     var command_history=[];
     var cursor=0;
     var current_file,current_dir='.';
-
+    function show_info(msg){
+        info.innerText=msg;
+        setTimeout(function(){info.innerText='';},5000);
+    }
     var onmessage = function(ev){
       console.log('recv:',ev.data);
+      if(ev.data=='saved'){
+          show_info('saved');
+      }
       if(command.indexOf('cd ')==0){
         current_dir=ev.data.trim();
       }
