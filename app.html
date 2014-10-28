@@ -51,7 +51,6 @@
 
   <div id="show-btn">
     <input type="text" id="input" style="width:80%" />
-    <button onclick="save()">save</button>
     <button onclick="reconnect()">connect</button>
   </div>
 
@@ -64,7 +63,17 @@
       'py':"ace/mode/python",
       'js':"ace/mode/javascript",
     }
-
+    editor.commands.addCommand({
+      name: 'saveFile',
+      bindKey: {
+      win: 'Ctrl-S',
+      mac: 'Command-S',
+      sender: 'editor|cli'
+      },
+      exec: function(env, args, request) {
+        save();
+      }
+    });
     
     function connect(){
         var host=window.location.host;
@@ -99,7 +108,7 @@
     var command;
     var command_history=[];
     var cursor=0;
-    var current_file,current_dir;
+    var current_file,current_dir='.';
 
     var onmessage = function(ev){
       console.log('recv:',ev.data);
@@ -109,6 +118,7 @@
       if(command.indexOf('cat ')==0){
         current_file=command.slice(4).trim();
         editor.setValue(ev.data);
+        editor.clearSelection();
         ext= current_file.split('.').pop();
         if(ext_mode[ext]){
           editor.getSession().setMode(ext_mode[ext]);
@@ -117,7 +127,6 @@
         box.innerHTML+='<div><pre>'+ev.data+'</pre></div>';
       }
       scrollToBottom(box);
-
     };
 
     function ws_send(data){
@@ -135,6 +144,7 @@
         'file':current_dir+'/'+current_file,
         'content':editor.getValue(),
       };
+      command="save";
       ws_send(data);
     }
     function send(){
@@ -154,7 +164,6 @@
     }
     input.addEventListener('keypress',function(e){
       if(e.keyCode==13)send();
-      console.log(e);
     });
     input.addEventListener('keydown',function(e){
       if(e.keyCode==38&&cursor<command_history.length){
