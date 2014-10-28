@@ -51,7 +51,7 @@
 
   <div id="show-btn">
     <input type="text" id="input" style="width:80%" />
-    <button onclick="reconnect()">connect</button>
+    <button onclick="reconnect()">reconnect</button>
     <span id="info"><span>
   </div>
 
@@ -111,9 +111,11 @@
     var command_history=[];
     var cursor=0;
     var current_file,current_dir='.';
+    var timer;
     function show_info(msg){
+        clearTimeout(timer);
         info.innerText=msg;
-        setTimeout(function(){info.innerText='';},5000);
+        timer=setTimeout(function(){info.innerText='';},5000);
     }
     var onmessage = function(ev){
       console.log('recv:',ev.data);
