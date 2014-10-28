@@ -4,7 +4,7 @@ import tornado.websocket
 import subprocess  
 import json
 
-
+passkey="test"
 class EchoWebSocket(tornado.websocket.WebSocketHandler):
     def run(self,command):  
         p = subprocess.Popen(command, stdin = subprocess.PIPE,
@@ -21,6 +21,8 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
         return result
 
     def open(self):
+        if self.get_secure_cookie('user')!=passkey:
+            return None
         print "WebSocket opened"
         self.cwd="."
 
@@ -38,13 +40,19 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render('app.html')
+        if  self.get_argument('u','')==passkey:
+            self.set_secure_cookie("user", passkey)
+            self.render('app.html')
+        else:
+            self.write('403')
+            return
+        
 
 application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/ws", EchoWebSocket),
 
-],debug=True,)
+],debug=True,cookie_secret="A test cookie_secret")
 
 if __name__ == "__main__":
     application.listen(8888)
