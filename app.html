@@ -18,7 +18,7 @@
         bottom: 30px;
         left: 20px;
         opacity: 0.8;
-        border;1px #ccc solid;
+        border:1px #ccc solid;
         background-color: black;
         color:white;
     }
@@ -26,10 +26,15 @@
         position: absolute;
         z-index: 99999;
         right: 20px;
-        bottom: 0px;
         left: 20px;
+        bottom: 0px;
         height:20px;
         background-color: #eee;
+    }
+    #input{
+        width:80%;
+        background-color: transparent;
+        border: 0px solid;
     }
     #message_box{
       height:95%;overflow-y:scroll;
@@ -115,7 +120,7 @@
     function show_info(msg){
         clearTimeout(timer);
         info.innerText=msg;
-        timer=setTimeout(function(){info.innerText='';},5000);
+        timer=setTimeout(function(){info.innerText='';},3000);
     }
     var onmessage = function(ev){
       console.log('recv:',ev.data);
