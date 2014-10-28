@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>tornado WebSocket example</title>
+  <style>
+    #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+    #shell { 
+        position: absolute;
+        z-index: -1;
+        top: 0;
+        right: 20px;
+        bottom: 40px;
+        left: 20px;
+        opacity: 0.8;
+        background-color: black;
+        color:white;
+    }
+    #show-btn { 
+        position: absolute;
+        z-index: 99999;
+        right: 20px;
+        bottom: 20px;
+        left: 20px;
+        background-color: #eee;
+    }
+    #message_box{
+      height:95%;overflow-y:scroll;
+    }
+    #message_box::-webkit-scrollbar { 
+    display: none; 
+    }
+  </style>
+</head>
+<body>
+  <div id="shell">
+  <div id="message_box"></div>
+  </div>
+
+  <div id="editor"></div>
+
+  <div id="show-btn">
+    <input type="text" id="input" style="width:80%" />
+    <button onclick="save()">save</button>
+    <button onclick="connect()">connect</button>
+  </div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.getSession().setMode("ace/mode/javascript");
+    var ext_mode={
+      'py':"ace/mode/python",
+      'js':"ace/mode/javascript",
+    }
+    var ws = new WebSocket('ws://jiang:8888/ws');
+    function connect(){
+      if(ws==null)
+        ws=new WebSocket('ws://jiang:8888/ws');
+    }
+    var box = document.getElementById('message_box');
+    var input=document.getElementById('input');
+    var shell=document.getElementById("shell");
+    var command;
+    var current_file,current_dir;
+    ws.onopen = function(){
+      console.log('open');
+    };
+    ws.onmessage = function(ev){
+      console.log(ev.data);
+      if(command.indexOf('cd ')==0){
+        current_dir=ev.data;
+      }
+      if(command.indexOf('cat ')==0){
+        current_file=command.slice(4).trim();
+        editor.setValue(ev.data);
+        ext= current_file.split('.').pop();
+        if(ext_mode[ext]){
+          editor.getSession().setMode(ext_mode[ext]);
+        }
+      }else{
+        box.innerHTML+='<p><pre>'+ev.data+'</pre></p>';
+      }
+
+    };
+    ws.onclose = function(ev){
+      ws=null;
+      console.log('close');
+    };
+    ws.onerror = function(ev){
+      ws=null;
+      console.log('error');
+    };
+    function save(){
+      console.log('save file',current_dir,current_file);
+      //console.log(editor.getValue());
+      ws.send('save '+current_file+':'+editor.getValue());
+    }
+    function send(){
+      if(ws==null){
+        alert("please reconnect");
+        return;
+      }
+      ws.send(input.value);
+      command=input.value;
+      box.innerHTML+='<p><b>Lin :</b>'+input.value+'</p>';
+      input.value='';
+      setTimeout(function(){
+        box.scrollTop=box.scrollHeight;
+      },100);
+      
+    }
+    input.addEventListener('keypress',function(e){
+      if(e.keyCode==13){
+        send();
+      }
+    });
+    input.addEventListener('focus',function(e){
+      console.log('focus');
+      shell.style.zIndex=999;
+    });
+    input.addEventListener('blur',function(e){
+      console.log('focus');
+      shell.style.zIndex=-1;
+    });
+
+  </script>
+</body>
+</html>
