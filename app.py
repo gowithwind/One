@@ -2,13 +2,13 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 import subprocess  
-
+import json
 
 
 class EchoWebSocket(tornado.websocket.WebSocketHandler):
     def run(self,command):  
         p = subprocess.Popen(command, stdin = subprocess.PIPE,
-            stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True,cwd=self.cwd)  
+            stdout = subprocess.PIPE, stderr = subprocess.PIPE, shell = True,cwd=self.cwd)
         return p.stdout.read()  +p.stderr.read()
     def save(self,file,content):
         with open(file,'w') as f:
@@ -17,7 +17,7 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
     def shell(self,command):
         if str(command).startswith('cd '):command+=";pwd"
         result=self.run(command)
-        if str(command).startswith('cd '):self.cwd=result.strip()
+        if str(command).startswith('cd '):self.cwd=result.strip('\n')
         return result
 
     def open(self):
@@ -26,11 +26,11 @@ class EchoWebSocket(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         print message
-        if message.startswith('save '):
-            p=message.find(':')
-            result=self.save(message[5:p],message[p+1:])
+        data=json.loads(message)
+        if data['command']=='save':
+            result=self.save(data['file'],data['content'])
         else:
-            result=self.shell(message)
+            result=self.shell(data['command'])
         self.write_message(result)
 
     def on_close(self):

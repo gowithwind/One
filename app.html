@@ -7,17 +7,18 @@
         position: absolute;
         top: 0;
         right: 0;
-        bottom: 0;
+        bottom: 20px;
         left: 0;
     }
     #shell { 
         position: absolute;
         z-index: -1;
-        top: 0;
+        top: 10px;
         right: 20px;
-        bottom: 40px;
+        bottom: 30px;
         left: 20px;
         opacity: 0.8;
+        border;1px #ccc solid;
         background-color: black;
         color:white;
     }
@@ -25,8 +26,9 @@
         position: absolute;
         z-index: 99999;
         right: 20px;
-        bottom: 20px;
+        bottom: 0px;
         left: 20px;
+        height:20px;
         background-color: #eee;
     }
     #message_box{
@@ -35,11 +37,14 @@
     #message_box::-webkit-scrollbar { 
     display: none; 
     }
+    .tip{
+      color:green;
+    }
   </style>
 </head>
 <body>
   <div id="shell">
-  <div id="message_box"></div>
+  <div id="message_box"><p>Welcome to web-shell!</p></div>
   </div>
 
   <div id="editor"></div>
@@ -47,7 +52,7 @@
   <div id="show-btn">
     <input type="text" id="input" style="width:80%" />
     <button onclick="save()">save</button>
-    <button onclick="connect()">connect</button>
+    <button onclick="reconnect()">connect</button>
   </div>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -59,23 +64,47 @@
       'py':"ace/mode/python",
       'js':"ace/mode/javascript",
     }
-    var ws = new WebSocket('ws://jiang:8888/ws');
+
+    
     function connect(){
-      if(ws==null)
-        ws=new WebSocket('ws://jiang:8888/ws');
+        var host=window.location.host;
+        var ws_url='ws://'+host+'/ws';
+        console.log('connect');
+        var ws=new WebSocket(ws_url);
+        ws.onopen = function(){
+          console.log('open');
+        };
+        ws.onmessage=function(ev){
+          onmessage(ev);
+        };
+        ws.onclose = function(ev){
+          ws.close();
+          console.log('close');
+        };
+        ws.onerror = function(ev){
+          ws.close();
+          console.log('error');
+        };
+        return ws;
     }
+    function reconnect () {
+      ws.close();
+      ws=null;
+      ws=connect();
+    }
+    var ws=connect();
     var box = document.getElementById('message_box');
     var input=document.getElementById('input');
     var shell=document.getElementById("shell");
     var command;
+    var command_history=[];
+    var cursor=0;
     var current_file,current_dir;
-    ws.onopen = function(){
-      console.log('open');
-    };
-    ws.onmessage = function(ev){
-      console.log(ev.data);
+
+    var onmessage = function(ev){
+      console.log('recv:',ev.data);
       if(command.indexOf('cd ')==0){
-        current_dir=ev.data;
+        current_dir=ev.data.trim();
       }
       if(command.indexOf('cat ')==0){
         current_file=command.slice(4).trim();
@@ -85,48 +114,59 @@
           editor.getSession().setMode(ext_mode[ext]);
         }
       }else{
-        box.innerHTML+='<p><pre>'+ev.data+'</pre></p>';
+        box.innerHTML+='<div><pre>'+ev.data+'</pre></div>';
       }
 
     };
-    ws.onclose = function(ev){
-      ws=null;
-      console.log('close');
-    };
-    ws.onerror = function(ev){
-      ws=null;
-      console.log('error');
-    };
-    function save(){
-      console.log('save file',current_dir,current_file);
-      //console.log(editor.getValue());
-      ws.send('save '+current_file+':'+editor.getValue());
-    }
-    function send(){
+
+    function ws_send(data){
       if(ws==null){
         alert("please reconnect");
         return;
       }
-      ws.send(input.value);
+      console.log('send:',data);
+      ws.send(JSON.stringify(data));
+    }
+    function save(){
+      console.log('save file',current_dir,current_file);
+      data={
+        'command':'save',
+        'file':current_dir+'/'+current_file,
+        'content':editor.getValue(),
+      };
+      ws_send(data);
+    }
+    function send(){
+      ws_send({'command':input.value});
       command=input.value;
-      box.innerHTML+='<p><b>Lin :</b>'+input.value+'</p>';
+      command_history.push(command);
+      cursor=0;
+      box.innerHTML+='<p><b class="tip">Lin :</b>'+input.value+'</p>';
       input.value='';
       setTimeout(function(){
         box.scrollTop=box.scrollHeight;
       },100);
       
     }
+
     input.addEventListener('keypress',function(e){
-      if(e.keyCode==13){
-        send();
+      if(e.keyCode==13)send();
+      console.log(e);
+    });
+    input.addEventListener('keydown',function(e){
+      if(e.keyCode==38&&cursor<command_history.length){
+        input.value=command_history[command_history.length-1-cursor];
+        cursor+=1;
+      }
+      if(e.keyCode==40&&cursor>0){
+        input.value=command_history[command_history.length-1-cursor];
+        cursor-=1;
       }
     });
     input.addEventListener('focus',function(e){
-      console.log('focus');
       shell.style.zIndex=999;
     });
     input.addEventListener('blur',function(e){
-      console.log('focus');
       shell.style.zIndex=-1;
     });
 
