@@ -116,6 +116,7 @@
       }else{
         box.innerHTML+='<div><pre>'+ev.data+'</pre></div>';
       }
+      scrollToBottom(box);
 
     };
 
@@ -143,12 +144,14 @@
       cursor=0;
       box.innerHTML+='<p><b class="tip">Lin :</b>'+input.value+'</p>';
       input.value='';
-      setTimeout(function(){
-        box.scrollTop=box.scrollHeight;
-      },100);
-      
+      scrollToBottom(box);
     }
 
+    function scrollToBottom(divbox){
+      setTimeout(function(){
+        divbox.scrollTop=divbox.scrollHeight;
+      },100);
+    }
     input.addEventListener('keypress',function(e){
       if(e.keyCode==13)send();
       console.log(e);
