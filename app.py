@@ -42,10 +42,9 @@ class MainHandler(tornado.web.RequestHandler):
     def get(self):
         if  self.get_argument('u','')==passkey:
             self.set_secure_cookie("user", passkey)
-            self.render('app.html')
-        else:
-            self.write('403')
+            self.redirect('/')
             return
+        self.render('app.html')
         
 
 application = tornado.web.Application([

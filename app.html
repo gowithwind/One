@@ -57,7 +57,7 @@
   <div id="show-btn">
     <input type="text" id="input" style="width:80%" />
     <button onclick="reconnect()">reconnect</button>
-    <span id="info"><span>
+    <span id="info"></span>
   </div>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -68,6 +68,7 @@
     var ext_mode={
       'py':"ace/mode/python",
       'js':"ace/mode/javascript",
+      'html':"ace/mode/html",
     }
     editor.commands.addCommand({
       name: 'saveFile',
@@ -88,12 +89,14 @@
         var ws=new WebSocket(ws_url);
         ws.onopen = function(){
           console.log('open');
+          show_info('open');
         };
         ws.onmessage=function(ev){
           onmessage(ev);
         };
         ws.onclose = function(ev){
           ws.close();
+          show_info('close');
           console.log('close');
         };
         ws.onerror = function(ev){
