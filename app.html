@@ -22,19 +22,20 @@
         background-color: black;
         color:white;
     }
-    #show-btn { 
+    #command-line { 
         position: absolute;
         z-index: 99999;
         right: 20px;
         left: 20px;
-        bottom: 0px;
+        bottom: 1px;
         height:20px;
         background-color: #eee;
     }
     #input{
         width:80%;
+        height:18px;
         background-color: transparent;
-        border: 0px solid;
+        border: 1px gray solid;
     }
     #message_box{
       height:95%;overflow-y:scroll;
@@ -54,7 +55,7 @@
 
   <div id="editor"></div>
 
-  <div id="show-btn">
+  <div id="command-line">
     <input type="text" id="input" style="width:80%" />
     <button onclick="reconnect()">reconnect</button>
     <span id="info"></span>
@@ -142,10 +143,14 @@
           editor.getSession().setMode(ext_mode[ext]);
         }
       }else{
-        box.innerHTML+='<div><pre>'+ev.data+'</pre></div>';
+        box.innerHTML+='<div><pre>'+htmlEncode(ev.data)+'</pre></div>';
       }
       scrollToBottom(box);
     };
+    function htmlEncode( html ) {
+        return document.createElement( 'a' ).appendChild( 
+            document.createTextNode( html ) ).parentNode.innerHTML;
+    }
 
     function ws_send(data){
       if(ws==null){
@@ -170,7 +175,7 @@
       command=input.value;
       command_history.push(command);
       cursor=0;
-      box.innerHTML+='<p><b class="tip">Lin :</b>'+input.value+'</p>';
+      box.innerHTML+='<pre><b class="tip">Lin :</b>'+input.value+'</pre>';
       input.value='';
       scrollToBottom(box);
     }
@@ -199,7 +204,6 @@
     input.addEventListener('blur',function(e){
       shell.style.zIndex=-1;
     });
-
   </script>
 </body>
 </html>
