@@ -153,8 +153,8 @@
     }
 
     function ws_send(data){
-      if(ws==null){
-        alert("please reconnect");
+      if(ws.readyState>1){
+        alert("please reconnect!");
         return;
       }
       console.log('send:',data);
